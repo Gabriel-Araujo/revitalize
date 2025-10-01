@@ -9,6 +9,4 @@ class Config:
         self.debug_mode = debug_mode
 
     def __str__(self) -> str:
-        return format(
-            f"file type: {self.file_type} \nfile path: {self.file_path} \ndebug mode: {self.debug_mode}"
-        )
+        return f"file type: {self.file_type} \nfile path: {self.file_path} \ndebug mode: {self.debug_mode}"
