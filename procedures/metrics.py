@@ -9,7 +9,7 @@ def psnr_metric(y_true, y_pred):  # mede o quão próxima a imagem reconstruída
 def ssim_metric(y_true, y_pred): # mede a similaridade estrutural entre as imagens. 
     return tf.image.ssim(y_true, y_pred, max_val=1.0)
 
-def _edge_map(x):
+def _edge_map(x): # calcula mapa de bordas usando filtro Sobel
     gx = tf.image.sobel_edges(x)
     dx = gx[...,0,0]; dy = gx[...,0,1]
     return tf.sqrt(dx*dx + dy*dy + 1e-6)

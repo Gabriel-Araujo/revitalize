@@ -11,7 +11,7 @@ from procedures.model import build_unet_autoencoder
 
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 
-# Callback de diagnóstico
+# Callback de diagnóstico, pra ajudar a monitorar se a rede está saturando
 class PredStats(tf.keras.callbacks.Callback):
     def __init__(self, sample_batch):
         super().__init__()
@@ -20,6 +20,7 @@ class PredStats(tf.keras.callbacks.Callback):
         preds = self.model.predict(self.sample, verbose=0)
         print(f"[dbg] epoch {epoch} pred min={preds.min():.3f} max={preds.max():.3f} mean={preds.mean():.3f}")
 
+# valida o dataset e as métricas
 def validate_dataset(clean_dir, degraded_dir, img_size=128, sample=8):
     files = sorted([f for f in os.listdir(clean_dir)
                     if f.lower().endswith(('.png','.jpg','.jpeg','.tif','.bmp'))])
@@ -43,7 +44,6 @@ def validate_dataset(clean_dir, degraded_dir, img_size=128, sample=8):
         print(f"PSNR base(médio): {np.mean(psnrs):.2f}  SSIM base: {np.mean(ssims):.3f}")
 
 def main():
-    # Reprodutibilidade
     SEED = 42
     np.random.seed(SEED)
     tf.random.set_seed(SEED)
@@ -52,8 +52,8 @@ def main():
     DEGRADED_DIR = "dataset/train/degraded"
 
     TARGET_FULL = 1000   # resize + pad
-    PATCH       = 320
-    SUBSET      = 120    # páginas (reduza/aumente)
+    PATCH       = 256
+    SUBSET      = 500    # páginas (reduza/aumente)
     MAX_PATCHES = 12    # patches por página
 
     validate_dataset(CLEAN_DIR, DEGRADED_DIR, img_size=128)

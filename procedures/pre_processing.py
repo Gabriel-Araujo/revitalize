@@ -26,13 +26,20 @@ def load_pairs(clean_dir, img_size=256, generate=False, degraded_dir='dataset/tr
     files = [f for f in os.listdir(clean_dir)
              if f.lower().endswith(('.png','.jpg','.jpeg','.tif','.bmp'))]
 
-    # Aplica limite ANTES de ler (acelera)
+    # aplica limites antes de ler
     if limit and len(files) > limit:
         files = list(rng.choice(files, size=limit, replace=False))
 
     files.sort()
     X, Y = [], []
     total = len(files)
+    #############################################################################
+    #  Para cada imagem:
+    #  1. Lê a versão limpa e degradada.
+    #  2. Redimensiona
+    #  3. Normaliza os valores para o intervalo [0,1]
+    #  4. Adiciona as imagens às listas X e Y
+    #############################################################################
     for i, fname in enumerate(files, 1):
         cpath = os.path.join(clean_dir, fname)
         dpath = os.path.join(degraded_dir, fname)
@@ -57,11 +64,12 @@ def load_pairs(clean_dir, img_size=256, generate=False, degraded_dir='dataset/tr
 def extract_text_patches_strict(X, Y, patch=256, max_patches_per_img=12,
                                 var_min=0.0008, dark_min=0.01, dark_max=0.40,
                                 attempts=120, thresh_val=0.90):
-    """
-    Retorna apenas patches com quantidade moderada de texto.
-    dark_min: fração mínima de pixels escuros (texto)
-    dark_max: fração máxima (evita blocos quase pretos)
-    """
+    
+    ##############################################################
+    # Retorna apenas patches com quantidade moderada de texto.
+    # dark_min: fração mínima de pixels escuros (texto)
+    # dark_max: fração máxima (evita blocos quase pretos)
+    ##############################################################
     newX, newY = [], []
     for xd, yc in zip(X, Y):
         h, w = xd.shape[:2]
@@ -94,16 +102,20 @@ def extract_text_patches_strict(X, Y, patch=256, max_patches_per_img=12,
             newX.append(xd[cy:cy+patch, cx:cx+patch, :])
             newY.append(yc[cy:cy+patch, cx:cx+patch, :])
 
+    # newX: patches das imagens degradadas
+    # newY: patches correspondentes das limpas
+
     if not newX:
         print("Aviso: nenhum patch gerado. Ajuste parâmetros.")
         return None, None
     return np.stack(newX), np.stack(newY)
 
 def sliding_reconstruct(model, img_degraded, patch=256, stride=192):
-    """
-    img_degraded: ndarray float32 [H,W,1] já normalizada (0-1) e quadrada (ex: 768x768).
-    Retorna imagem reconstruída (0-1) mesma dimensão.
-    """
+    ##############################################################
+    # Reconstrói imagens grandes dividindo-as em blocos menores (patches)
+    # img_degraded: ndarray float32 [H,W,1] já normalizada (0-1) e quadrada (ex: 768x768).
+    # Retorna imagem reconstruída (0-1) mesma dimensão.
+    ##############################################################
     H, W, _ = img_degraded.shape
     out = np.zeros((H, W), dtype=np.float32)
     weight = np.zeros((H, W), dtype=np.float32)
@@ -137,9 +149,9 @@ def sliding_reconstruct(model, img_degraded, patch=256, stride=192):
     return rec[...,None]
 
 def reconstruct_document(model, img_path, target_full=768, patch=256, stride=192):
-    """
-    Lê imagem degradada (grayscale) do disco, aplica resize_with_pad, reconstrói.
-    """
+    
+    # Lê imagem degradada (grayscale) do disco, aplica resize_with_pad, reconstrói.
+
     raw = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
     proc = resize_with_pad(raw, target_full).astype(np.float32)/255.0
     proc = proc[...,None]

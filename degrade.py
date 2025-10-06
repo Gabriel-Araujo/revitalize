@@ -4,25 +4,25 @@ import random
 import os
 
 def degrade_image(img):
-    # 1. Ruído Gaussiano
-    noise = np.random.normal(0, 1, img.shape).astype(np.int16)
+    # ruido gaussiano
+    noise = np.random.normal(0, 15, img.shape).astype(np.int16)
     degraded = cv2.add(img, noise.astype(np.uint8))
 
-    # 2. Manchas (círculos escuros/claros aleatórios)
+    # manchas aleatórias
     for _ in range(3):  # número de manchas
         x, y = random.randint(0, degraded.shape[1]-1), random.randint(0, degraded.shape[0]-1)
         r = random.randint(10, 50)
         color = random.randint(100, 200)
         cv2.circle(degraded, (x, y), r, (color,), -1)
 
-    # 3. Desfocagem (simula scanner ruim)
+    # desfoque, gaussian blur 3x3 
     degraded = cv2.GaussianBlur(degraded, (3, 3), 0)
 
     return degraded
 
 # Diretórios
 input_dir = "dataset/train/clean/letter"
-output_dir = "dataset/train/test/final"
+output_dir = "dataset/train/degraded"
 
 os.makedirs(output_dir, exist_ok=True)
 
